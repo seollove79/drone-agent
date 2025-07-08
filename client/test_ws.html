@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>드론 WebSocket 테스트</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    #log { border: 1px solid #ccc; height: 200px; overflow: auto; margin-top: 1em; padding: 0.5em; background: #f9f9f9; }
+    #telemetry { white-space: pre; background: #eef; padding: 0.5em; margin-top: 1em; }
+    button { margin-right: 1em; }
+  </style>
+</head>
+<body>
+  <h2>드론 WebSocket 테스트</h2>
+  <label>WebSocket 주소: <input id="wsurl" value="ws://localhost:8000/ws" size="40"></label>
+  <button onclick="connectWS()">연결</button>
+  <button onclick="disconnectWS()">해제</button>
+  <div id="status">상태: 연결 안 됨</div>
+  <div>
+    <button onclick="sendArm(true)">ARM</button>
+    <button onclick="sendArm(false)">DISARM</button>
+    <button onclick="sendSetMode('GUIDED')">GUIDED</button>
+    <button onclick="sendSetMode('RTL')">RTL</button>
+  </div>
+  <div id="telemetry">Telemetry: (없음)</div>
+  <div id="log"></div>
+  <script>
+    let ws = null;
+    function log(msg) {
+      document.getElementById('log').innerText += msg + '\n';
+    }
+    function setStatus(msg) {
+      document.getElementById('status').innerText = '상태: ' + msg;
+    }
+    function connectWS() {
+      const url = document.getElementById('wsurl').value;
+      ws = new WebSocket(url);
+      ws.onopen = () => { setStatus('연결됨'); log('WebSocket 연결됨'); };
+      ws.onclose = () => { setStatus('연결 해제'); log('WebSocket 해제'); };
+      ws.onerror = e => { setStatus('에러'); log('WebSocket 에러: ' + e); };
+      ws.onmessage = e => {
+        log('수신: ' + e.data);
+        try {
+          const data = JSON.parse(e.data);
+          if (data.type === 'telemetry') {
+            document.getElementById('telemetry').innerText = 'Telemetry: ' + JSON.stringify(data.payload, null, 2);
+          }
+        } catch {}
+      };
+    }
+    function disconnectWS() {
+      if (ws) ws.close();
+    }
+    function sendArm(arm) {
+      if (!ws || ws.readyState !== 1) return log('WebSocket 연결 필요');
+      ws.send(JSON.stringify({ type: 'command', action: 'arm', value: arm }));
+      log('전송: ARM ' + (arm ? 'ON' : 'OFF'));
+    }
+    function sendSetMode(mode) {
+      if (!ws || ws.readyState !== 1) return log('WebSocket 연결 필요');
+      ws.send(JSON.stringify({ type: 'command', action: 'set_mode', value: mode }));
+      log('전송: set_mode ' + mode);
+    }
+  </script>
+</body>
+</html> 

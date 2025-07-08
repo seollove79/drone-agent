@@ -1,0 +1,15 @@
+fc:
+  # 실제 FC 연결: 예) /dev/ttyAMA0, 57600
+  # SITL 테스트(TCP): 예) tcp:127.0.0.1:5760
+  #device: /dev/ttyAMA0  # 또는 tcp:127.0.0.1:5760
+  device: tcp:127.0.0.1:5762
+  baudrate: 57600       # TCP 연결 시 생략 가능
+
+websocket:
+  #url: wss://control-server.example.com/ws
+  url: ws://localhost:8111/ws
+  reconnect_interval: 5
+  drone_id: drone_001
+
+logging:
+  level: INFO 
